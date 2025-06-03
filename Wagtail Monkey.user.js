@@ -10,6 +10,8 @@
 // @include     /^https?://stage\.tech\.netdoktor\.at/
 // @include     /^https?://stage\.tech\.netdoktor\.ch/
 // @version     4.0
+// @downloadURL https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
+// @updateURL   https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
 // @grant       none
 // @require     https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.14/vue.min.js
 // @require     https://code.jquery.com/jquery-3.4.1.min.js
