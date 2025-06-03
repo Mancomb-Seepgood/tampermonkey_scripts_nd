@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wagtail Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.7
 // @description  Adds utility buttons for Wagtail
 // @author       Ben
 // @match        https://www.netdoktor.de/*
@@ -27,11 +27,11 @@ function extractPageId() {
 let isHovering = {
     parent: false,
     edit: false,
-    legacy: false
+    pagetree: false
 };
 
 function updateHoverState() {
-    if (!isHovering.parent && !isHovering.edit && !isHovering.legacy) {
+    if (!isHovering.parent && !isHovering.edit && !isHovering.pagetree) {
         childContainer.style.maxHeight = '0';
     }
 }
@@ -91,26 +91,26 @@ editButton.style.transitionDuration = '0.4s';
 editButton.style.webkitTransitionDuration = '0.4s';
 
 // Create the "Open Page Tree" button
-const legacyButton = document.createElement('button');
-legacyButton.textContent = 'Open Page Tree';
-legacyButton.style.backgroundColor = '#00bef7';
-legacyButton.style.border = 'none';
-legacyButton.style.borderRadius = '6px';
-legacyButton.style.color = 'white';
-legacyButton.style.opacity = '0.7';
-legacyButton.style.padding = '8px 16px';
-legacyButton.style.textAlign = 'center';
-legacyButton.style.textDecoration = 'none';
-legacyButton.style.display = 'inline-block';
-legacyButton.style.fontSize = '17px';
-legacyButton.style.fontWeight = 'bold';
-legacyButton.style.margin = '4px 2px';
-legacyButton.style.cursor = 'pointer';
-legacyButton.style.transitionDuration = '0.4s';
-legacyButton.style.webkitTransitionDuration = '0.4s';
+const pagetreeButton = document.createElement('button');
+pagetreeButton.textContent = 'Open Page Tree';
+pagetreeButton.style.backgroundColor = '#00bef7';
+pagetreeButton.style.border = 'none';
+pagetreeButton.style.borderRadius = '6px';
+pagetreeButton.style.color = 'white';
+pagetreeButton.style.opacity = '0.7';
+pagetreeButton.style.padding = '8px 16px';
+pagetreeButton.style.textAlign = 'center';
+pagetreeButton.style.textDecoration = 'none';
+pagetreeButton.style.display = 'inline-block';
+pagetreeButton.style.fontSize = '17px';
+pagetreeButton.style.fontWeight = 'bold';
+pagetreeButton.style.margin = '4px 2px';
+pagetreeButton.style.cursor = 'pointer';
+pagetreeButton.style.transitionDuration = '0.4s';
+pagetreeButton.style.webkitTransitionDuration = '0.4s';
 
 // Add hover effect to buttons
-[parentButton, editButton, legacyButton].forEach(button => {
+[parentButton, editButton, pagetreeButton].forEach(button => {
     button.addEventListener('mouseover', function() {
         button.style.boxShadow = '0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19)';
         button.style.opacity = '1.0';
@@ -140,17 +140,17 @@ editButton.addEventListener('mouseleave', () => {
     setTimeout(updateHoverState, 1000);
 });
 
-legacyButton.addEventListener('mouseenter', () => {
-    isHovering.legacy = true;
+pagetreeButton.addEventListener('mouseenter', () => {
+    isHovering.pagetree = true;
 });
-legacyButton.addEventListener('mouseleave', () => {
-    isHovering.legacy = false;
+pagetreeButton.addEventListener('mouseleave', () => {
+    isHovering.pagetree = false;
     setTimeout(updateHoverState, 1000);
 });
 
 // Append child buttons to the container
 childContainer.appendChild(editButton);
-childContainer.appendChild(legacyButton);
+childContainer.appendChild(pagetreeButton);
 
 // Append the parent button and child container to the body
 document.body.appendChild(parentButton);
@@ -167,8 +167,8 @@ editButton.addEventListener('click', function() {
     }
 });
 
-// Add click event to the "Open in Legacy" button
-legacyButton.addEventListener('click', function() {
+// Add click event to the "Open in pagetree" button
+pagetreeButton.addEventListener('click', function() {
     const pageId = extractPageId();
     if (pageId) {
         const pageUrl = `https://admin.netdoktor.de/admin/pages/${pageId}/`;
