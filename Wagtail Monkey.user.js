@@ -9,7 +9,7 @@
 // @include     /^https?://stage\.tech\.netdoktor\.de/
 // @include     /^https?://stage\.tech\.netdoktor\.at/
 // @include     /^https?://stage\.tech\.netdoktor\.ch/
-// @version     4.2
+// @version     4.3
 // @downloadURL https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
 // @updateURL   https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
 // @grant       none
@@ -20,7 +20,7 @@
 // ==/UserScript==
 
 (function (window) {
-    let version = "4.2";
+    let version = "4.3";
     let appTemplate = `<style>
   .vue-monkey {
     display: none;
@@ -215,9 +215,10 @@
                 window.location.href = "https://admin.netdoktor.de/admin/pages/" + this.articleid;
             },
             gotoEnv: function(envName) {
-                var envDomain = 'https://www.netdoktor.de';
-                if(envName == 'stage') envDomain = 'https://stage.tech.netdoktor.de';
-                if(envName == 'legacy') envDomain = 'https://legacy.netdoktor.de';
+                var tld = window.location.hostname.match(/netdoktor\.(.*?)$/)[1];
+                var envDomain = 'https://www.netdoktor.' + tld;
+                if(envName == 'stage') envDomain = 'https://stage.tech.netdoktor.' + tld;
+                if(envName == 'legacy') envDomain = 'https://legacy.netdoktor.' + tld;
                 window.location.href = envDomain + window.location.pathname;
             }
         }
