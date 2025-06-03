@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wagtail Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.7
+// @version      1.8
 // @description  Adds utility buttons for Wagtail
 // @author       Ben
 // @match        https://www.netdoktor.de/*
@@ -109,10 +109,23 @@ pagetreeButton.style.cursor = 'pointer';
 pagetreeButton.style.transitionDuration = '0.4s';
 pagetreeButton.style.webkitTransitionDuration = '0.4s';
 
-// Add hover effect to buttons
-[parentButton, editButton, pagetreeButton].forEach(button => {
+// Add hover effect to parent button
+[parentButton].forEach(button => {
     button.addEventListener('mouseover', function() {
         button.style.boxShadow = '0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19)';
+        button.style.opacity = '1.0';
+    });
+
+    button.addEventListener('mouseout', function() {
+        button.style.boxShadow = 'none';
+        button.style.opacity = '0.7';
+    });
+});
+
+// Add hover effect to child buttons
+[editButton, pagetreeButton].forEach(button => {
+    button.addEventListener('mouseover', function() {
+        button.style.boxShadow = '0 2px 2px 0 rgba(0,0,0,0.24)';
         button.style.opacity = '1.0';
     });
 
