@@ -9,7 +9,7 @@
 // @include     /^https?://stage\.tech\.netdoktor\.de/
 // @include     /^https?://stage\.tech\.netdoktor\.at/
 // @include     /^https?://stage\.tech\.netdoktor\.ch/
-// @version     4.0
+// @version     4.1
 // @downloadURL https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
 // @updateURL   https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
 // @grant       none
@@ -123,7 +123,7 @@
       <span class="form-label">Go to article in Wagtail admin:</span><input id="gotoId" type="text" v-model="articleid" value="" placeholder="Enter article ID and press enter"/>
     </div>
     <div class="fixed-block">
-      <span class="form-label">Switch environment:</span><button class="button" @click="gotoEnv('stage')">stage</button><button class="button" @click="gotoEnv('prod')">prod</button>
+      <span class="form-label">Switch environment:</span><button class="button" @click="gotoEnv('stage')">Stage</button><button class="button" @click="gotoEnv('prod')">Prod</button><button class="button" @click="gotoEnv('legacy')">Legacy</button>
     </div>
     <info-block
       v-for="post in posts"
@@ -217,6 +217,7 @@
             gotoEnv: function(envName) {
                 var envDomain = 'https://www.netdoktor.de';
                 if(envName == 'stage') envDomain = 'https://stage.tech.netdoktor.de';
+                if(envName == 'legacy') envDomain = 'https://legacy.netdoktor.de';
                 window.location.href = envDomain + window.location.pathname;
             }
         }
