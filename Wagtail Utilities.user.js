@@ -8,6 +8,8 @@
 // @match        https://www.netdoktor.at/*
 // @match        https://www.netdoktor.ch/*
 // @match        https://rezepte.netdoktor.at/*
+// @downloadURL  https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Utilities.user.js
+// @updateURL    https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Utilities.user.js
 // @grant        none
 // ==/UserScript==
 
