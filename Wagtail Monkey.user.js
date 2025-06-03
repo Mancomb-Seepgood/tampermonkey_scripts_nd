@@ -20,7 +20,7 @@
 // ==/UserScript==
 
 (function (window) {
-    let version = "4.0";
+    let version = "4.1";
     let appTemplate = `<style>
   .vue-monkey {
     display: none;
