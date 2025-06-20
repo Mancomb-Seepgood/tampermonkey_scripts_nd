@@ -9,7 +9,7 @@
 // @include     /^https?://stage\.tech\.netdoktor\.de/
 // @include     /^https?://stage\.tech\.netdoktor\.at/
 // @include     /^https?://stage\.tech\.netdoktor\.ch/
-// @version     4.4
+// @version     4.5
 // @downloadURL https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
 // @updateURL   https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
 // @grant       none
@@ -20,7 +20,7 @@
 // ==/UserScript==
 
 (function (window) {
-    let version = "4.4";
+    let version = "4.5";
     let appTemplate = `<style>
   .vue-monkey {
     display: none;
@@ -164,7 +164,7 @@
             this.mountDisplay = "block";
 
             metaInformation(this.dataLayer, this.posts);
-            bcnInformation(this.dataLayer, this.posts);
+            adInformation(this.dataLayer, this.posts);
             onPageformation(this.dataLayer, this.posts);
             helpInformation(this.posts);
 
@@ -259,15 +259,18 @@
                 ]});
     }
 
-    function bcnInformation(dataLayer, posts) {
+    function adInformation(dataLayer, posts) {
         posts.push({
-            title: "BCN Info",
+            title: "Ad Info",
             info: [
                 { label: "CS-ID", value: dataLayer.get("page.content.ads.csid") || "not set" },
                 { label: "Exclusive", value: dataLayer.get("page.content.ads.campaignIsExclusive") ? "yes" : "no" },
                 { label: "Campaign Type", value: dataLayer.get("page.content.ads.campaignType") || "not set" },
                 { label: "Category", value: dataLayer.get("page.content.ads.category") || "not set" },
                 { label: "Subtopic", value: dataLayer.get("page.content.ads.subtopic") || "not set" },
+                { label: "Layout", value: dataLayer.get("page.content.ads.layout") || "not set" },
+                { label: "Edi-Hub", value: dataLayer.get("page.content.ads.edihub") ? "yes" : "no" },
+                { label: "Ads Disabled?", value: JSON.parse(document.getElementById("nd-config").textContent).ads_disabled ? "yes" : "no" },
                 ]});
     }
 
@@ -276,7 +279,7 @@
             title: "Help",
             info: [
                 { label: "Copy article ID", value: "Just click the number underneath the monkey" },
-                { label: "What's the deal with the crown & sunglasses?", value: "If the monkey is shown wearing a crown and sunglasses, a cs-id is set on the page" },
+                { label: "What's the deal with the crown & sunglasses?", value: "If the monkey is sporting a crown and sunglasses, a CS-ID is set on the page" },
                 ]});
     }
 
@@ -313,7 +316,7 @@
             info: [
                 { label: "Wordlinks", value: ""+wordlinkCount },
                 { label: "Ad Slots Desktop", value: ""+adSlotsDesktopCount },
-                { label: "Ad Slots Mobile (Index & Article)", value: ""+adSlotsMobileCount },
+                { label: "Ad Slots Mobile (incl. Footer & Header)", value: ""+adSlotsMobileCount },
                 { label: "Ad Slots Desktop (Index)", value: ""+adSlotsDesktopCMSCount },
                 { label: "Image Gallery", value: ""+imageGalleryCount },
                 { label: "Link Box", value: ""+linkBoxCount },
