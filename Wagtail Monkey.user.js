@@ -9,7 +9,7 @@
 // @include     /^https?://stage\.tech\.netdoktor\.de/
 // @include     /^https?://stage\.tech\.netdoktor\.at/
 // @include     /^https?://stage\.tech\.netdoktor\.ch/
-// @version     4.3
+// @version     4.4
 // @downloadURL https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
 // @updateURL   https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
 // @grant       none
@@ -20,7 +20,7 @@
 // ==/UserScript==
 
 (function (window) {
-    let version = "4.3";
+    let version = "4.4";
     let appTemplate = `<style>
   .vue-monkey {
     display: none;
@@ -236,15 +236,15 @@
 
     function contentId(dataLayer) {
         if(dataLayer.get("page.pageType") == "index") {
-            return (dataLayer.get("page.mediaPageType") || "index")+" "+dataLayer.get("page.content.bcn.pageId");
+            return (dataLayer.get("page.mediaPageType") || "index")+" "+dataLayer.get("page.content.ads.pageId");
         } else if(dataLayer.get("page.pageType") != "index") {
-            return dataLayer.get("page.content.bcn.pageId");
+            return dataLayer.get("page.content.ads.pageId");
         }
         return "No ID"
     }
 
     function isCampaignDataLayer(dataLayer) {
-        return (dataLayer.get("page.content.bcn.csid") !== undefined) && (dataLayer.get("page.content.bcn.csid") != "")
+        return (dataLayer.get("page.content.ads.csid") !== undefined) && (dataLayer.get("page.content.ads.csid") != "")
     }
 
     function metaInformation(dataLayer, posts) {
@@ -263,11 +263,11 @@
         posts.push({
             title: "BCN Info",
             info: [
-                { label: "CS ID", value: dataLayer.get("page.content.bcn.csid") || "not set" },
-                { label: "Exclusive", value: dataLayer.get("page.content.bcn.campaignIsExclusive") ? "yes" : "no" },
-                { label: "Content Type", value: dataLayer.get("page.content.bcn.contentType") || "not set" },
-                { label: "Theme Cluster", value: dataLayer.get("page.content.bcn.themeCluster") || "not set" },
-                { label: "Topics", value: dataLayer.get("page.content.bcn.topics") || "not set" },
+                { label: "CS-ID", value: dataLayer.get("page.content.ads.csid") || "not set" },
+                { label: "Exclusive", value: dataLayer.get("page.content.ads.campaignIsExclusive") ? "yes" : "no" },
+                { label: "Campaign Type", value: dataLayer.get("page.content.ads.campaignType") || "not set" },
+                { label: "Category", value: dataLayer.get("page.content.ads.category") || "not set" },
+                { label: "Subtopic", value: dataLayer.get("page.content.ads.subtopic") || "not set" },
                 ]});
     }
 
@@ -284,9 +284,9 @@
         //wordlink counter
         let wordlinkCount = document.getElementsByClassName("wlm-link").length;
         //ad slots desktop counter
-        let adSlotsDesktopCount = document.getElementsByClassName("content-ad").length;
+        let adSlotsDesktopCount = document.querySelectorAll("nd-advertisement[class='content-ad']").length;
         //ad slots mobile counter
-        let adSlotsMobileCount = document.querySelectorAll("bcn-ad[slot='mobile']").length;
+        let adSlotsMobileCount = document.querySelectorAll("nd-ad-slot[slot='mobile']").length;
         //ad slots cms desktop counter
         let adSlotsDesktopCMSCount = document.getElementsByClassName("plugin-ad-container").length;
         //image gallery counter
