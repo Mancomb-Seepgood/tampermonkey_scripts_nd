@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         Wagtail Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.8
+// @version      1.9
 // @description  Adds utility buttons for Wagtail
 // @author       Ben
 // @match        https://www.netdoktor.de/*
 // @match        https://www.netdoktor.at/*
 // @match        https://www.netdoktor.ch/*
 // @match        https://rezepte.netdoktor.at/*
+// @include      /^https:\/\/admin\.netdoktor\.de\/admin\/pages\/\d+\/edit\/\?highlight.*$/
 // @downloadURL  https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Utilities.user.js
 // @updateURL    https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Utilities.user.js
 // @grant        none
@@ -170,15 +171,84 @@ document.body.appendChild(parentButton);
 document.body.appendChild(childContainer);
 
 // Add click event to the "Edit in Wagtail" button
-editButton.addEventListener('click', function() {
+editButton.addEventListener('click', function () {
     const pageId = extractPageId();
     if (pageId) {
-        const editUrl = `https://admin.netdoktor.de/admin/pages/${pageId}/edit/`;
+        const selectedText = window.getSelection().toString().trim();
+        const encodedText = encodeURIComponent(selectedText);
+        const editUrl = `https://admin.netdoktor.de/admin/pages/${pageId}/edit/` + (selectedText ? `?highlight=${encodedText}` : '');
         window.open(editUrl, '_blank');
     } else {
         alert('PageID not found!');
     }
 });
+
+(function () {
+    try {
+        const url = window.location.href;
+        const urlPattern = /^https:\/\/admin\.netdoktor\.de\/admin\/pages\/\d+\/edit\/\?highlight.*$/;
+
+        console.log("[ScrollScript] Current URL:", url);
+        if (!urlPattern.test(url)) {
+            console.log("[ScrollScript] URL does not match pattern. Script will not run.");
+            return;
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const highlight = params.get('highlight');
+        if (!highlight) {
+            console.log("[ScrollScript] No 'highlight' parameter found.");
+            return;
+        }
+
+        const section = document.querySelector('#panel-child-inhalt-body-section');
+        if (!section) {
+            console.error("[ScrollScript] Target section not found.");
+            return;
+        }
+
+        // Flatten text content from all text nodes in the section
+        const walker = document.createTreeWalker(section, NodeFilter.SHOW_TEXT);
+        const textNodes = [];
+        let fullText = "";
+        let currentNode;
+        while (currentNode = walker.nextNode()) {
+            textNodes.push({
+                node: currentNode,
+                start: fullText.length,
+                end: fullText.length + currentNode.nodeValue.length
+            });
+            fullText += currentNode.nodeValue;
+        }
+
+        const matchIndex = fullText.indexOf(highlight);
+        if (matchIndex === -1) {
+            console.warn("[ScrollScript] Highlight text not found in section.");
+            return;
+        }
+
+        console.log(`[ScrollScript] Text match found at index ${matchIndex}. Scanning for corresponding node...`);
+
+        // Find the node where the match begins
+        const matchNodeInfo = textNodes.find(n => matchIndex >= n.start && matchIndex < n.end);
+        if (!matchNodeInfo) {
+            console.warn("[ScrollScript] Could not locate node for matched text.");
+            return;
+        }
+
+        const parentElement = matchNodeInfo.node.parentElement;
+        if (parentElement && typeof parentElement.scrollIntoView === 'function') {
+            console.log("[ScrollScript] Scrolling parent element into view...");
+            parentElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            console.warn("[ScrollScript] Unable to scroll to matched element.");
+        }
+
+    } catch (err) {
+        console.error("[ScrollScript] Unexpected error:", err);
+    }
+})();
+
 
 // Add click event to the "Open in pagetree" button
 pagetreeButton.addEventListener('click', function() {
