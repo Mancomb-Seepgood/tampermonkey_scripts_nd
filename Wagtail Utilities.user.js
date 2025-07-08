@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wagtail Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.9
+// @version      1.9.1
 // @description  Adds utility buttons for Wagtail
 // @author       Ben
 // @match        https://www.netdoktor.de/*
@@ -166,9 +166,15 @@ pagetreeButton.addEventListener('mouseleave', () => {
 childContainer.appendChild(editButton);
 childContainer.appendChild(pagetreeButton);
 
-// Append the parent button and child container to the body
-document.body.appendChild(parentButton);
-document.body.appendChild(childContainer);
+// Run only on specific URL patterns
+if (
+  /^https:\/\/www\.netdoktor\.(de|at|ch)\/.*/.test(window.location.href) ||
+  /^https:\/\/rezepte\.netdoktor\.at\/.*/.test(window.location.href)
+) {
+  // Append the parent button and child container to the body
+  document.body.appendChild(parentButton);
+  document.body.appendChild(childContainer);
+}
 
 // Add click event to the "Edit in Wagtail" button
 editButton.addEventListener('click', function () {
