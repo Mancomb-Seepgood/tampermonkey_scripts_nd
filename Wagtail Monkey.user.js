@@ -9,7 +9,7 @@
 // @include     /^https?://stage\.tech\.netdoktor\.de/
 // @include     /^https?://stage\.tech\.netdoktor\.at/
 // @include     /^https?://stage\.tech\.netdoktor\.ch/
-// @version     4.6
+// @version     4.7
 // @description Adds a helpful simian companion to netDoktor pages that provides information about various on-page elements.
 // @downloadURL https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
 // @updateURL   https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
@@ -21,7 +21,7 @@
 // ==/UserScript==
 
 (function (window) {
-    let version = "4.6";
+    let version = "4.7";
     let appTemplate = `<style>
   .vue-monkey {
     display: none;
@@ -43,24 +43,24 @@
     padding-top: 8px;
   }
   .vue-monkey .closed-layer .image {
-    width: 50px;
-    height: 50px;
+    width: 75px;
+    height: 75px;
     border-radius:50%;
-    background-size: 50px 50px;
+    background-size: 75px 75px;
     display: block;
     pointer-events:auto;
   }
   .vue-monkey .closed-layer .image.standard {
-    background-image: url('https://cdn.netdoktor.de/images/internal/ir-monkey.jpg');
+    background-image: url('https://cdn.netdoktor.de/images/internal/IR_Monkey_v2.jpg');
   }
   .vue-monkey .closed-layer .image.campaign {
-    background-image: url('https://cdn.netdoktor.de/images/internal/ir_monkey_gold.png');
+    background-image: url('https://cdn.netdoktor.de/images/internal/IR_Monkey_Gold_v2.jpg');
   }
   .vue-monkey .closed-layer .id-label {
     pointer-events:auto;
     text-align: center;
     margin-top: 4px;
-    width: 50px; height: 20px;
+    width: 75px; height: 20px;
     background-color: rgba(255, 255, 255, 0.9);
     display: none;
   }
@@ -86,7 +86,7 @@
     padding: 4px 4px 0 4px;
   }
   .vue-monkey .info-block .info-block-detail .label {
-    font-size: 12px;
+    font-size: 14px;
     font-style: italic;
   }
   .vue-monkey .info-block .info-block-detail .value {
@@ -94,13 +94,13 @@
   }
   .vue-monkey .fixed-block {
     pointer-events:auto;
-    padding: 0 8px 0 20px;
+    padding: 8px 8px 0 20px;
   }
   .vue-monkey .fixed-block .goto-id {
     pointer-events:auto;
   }
   .vue-monkey .fixed-block .form-label {
-    font-size: 12px;
+    font-size: 14px;
     font-style: italic;
     padding-right: 8px;
   }
@@ -121,7 +121,7 @@
   <div class="open-layer" :class="[!isClosed ? 'shown' : 'hidden']" v-on:click="toggle">
     <div class="fixed-block">
       <form class="goto-id" @submit="gotoArticle" onsubmit="return false;">
-      <span class="form-label">Go to article in Wagtail admin:</span><input id="gotoId" type="text" v-model="articleid" value="" placeholder="Enter article ID and press enter"/>
+      <span class="form-label">Go to article in Wagtail admin:</span><input id="gotoId" type="text" v-model="articleid" value="" placeholder="Enter article ID & confirm"/>
     </div>
     <div class="fixed-block">
       <span class="form-label">Switch environment:</span><button class="button" @click="gotoEnv('stage')">Stage</button><button class="button" @click="gotoEnv('prod')">Prod</button><button class="button" @click="gotoEnv('legacy')">Legacy</button>
@@ -138,7 +138,7 @@
         data: {
             didMount: false,
             message: "",
-            styleButtonBackground: "'https://cdn.netdoktor.de/images/internal/ir-monkey.jpg'",
+            styleButtonBackground: "'https://cdn.netdoktor.de/images/internal/IR_Monkey_v2.jpg'",
             isCampaign: false,
             labelStyle: "none",
             isClosed: true,
@@ -297,6 +297,10 @@
         let imageGalleryCount = document.getElementsByClassName("image-gallery-block").length;
         //video counter
         let videoCount = document.getElementsByClassName("video with-description").length;
+        //inline image counter
+        let inlineImageCount = document.getElementsByClassName("block-image").length;
+        //three question interview counter
+        let threeQuestionInterviewCount = document.getElementsByClassName("block-three-questions").length;
         //sc teaser counter - currently not in use
         let scTeaserCount = document.getElementsByClassName("ndpm-contentteaser-sc-container").length;
         //lvc teaser counter - currently not in use
@@ -322,6 +326,8 @@
                 { label: "Image Gallery", value: ""+imageGalleryCount },
                 { label: "Link Box", value: ""+linkBoxCount },
                 { label: "Video", value: ""+videoCount },
+                { label: "Inline Images", value: ""+inlineImageCount },
+                { label: "3-Question Interviews", value: ""+threeQuestionInterviewCount },
                 { label: "Num. Sources", value: ""+sourcesCount },
                 { label: "QT & LVC", value: ""+qtAndLvcCount },
                 ]});
