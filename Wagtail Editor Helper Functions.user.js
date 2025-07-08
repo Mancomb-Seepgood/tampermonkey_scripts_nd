@@ -5,8 +5,8 @@
 // @description  Various helper functions for the page editor in Wagtail.
 // @author       Ben
 // @match        https://admin.netdoktor.de/admin/pages/*/edit/*
-// @downloadURL  https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail Editor Helper Functions.user.js
-// @updateURL    https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail Editor Helper Functions.user.js
+// @downloadURL  https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Editor%20Helper%20Functions.user.js
+// @updateURL    https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Editor%20Helper%20Functions.user.js
 // @grant        none
 // ==/UserScript==
 
