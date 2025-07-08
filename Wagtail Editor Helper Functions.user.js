@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wagtail Editor Helper Functions
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  Various helper functions for the page editor in Wagtail.
 // @author       Ben
 // @match        https://admin.netdoktor.de/admin/pages/*/edit/*
@@ -26,7 +26,8 @@
             padding: '15px 20px',
             borderRadius: '5px',
             boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-            fontSize: '14px',
+            fontSize: '16px',
+            fontWeight: 'bold',
             zIndex: 9999,
             opacity: 0,
             transition: 'opacity 0.5s ease'
