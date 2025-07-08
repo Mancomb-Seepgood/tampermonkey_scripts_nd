@@ -9,7 +9,7 @@
 // @include     /^https?://stage\.tech\.netdoktor\.de/
 // @include     /^https?://stage\.tech\.netdoktor\.at/
 // @include     /^https?://stage\.tech\.netdoktor\.ch/
-// @version     4.5
+// @version     4.6
 // @description Adds a helpful simian companion to netDoktor pages that provides information about various on-page elements.
 // @downloadURL https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
 // @updateURL   https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
@@ -21,7 +21,7 @@
 // ==/UserScript==
 
 (function (window) {
-    let version = "4.5";
+    let version = "4.6";
     let appTemplate = `<style>
   .vue-monkey {
     display: none;
@@ -220,7 +220,7 @@
                 var envDomain = 'https://www.netdoktor.' + tld;
                 if(envName == 'stage') envDomain = 'https://stage.tech.netdoktor.' + tld;
                 if(envName == 'legacy') envDomain = 'https://legacy.netdoktor.' + tld;
-                window.location.href = envDomain + window.location.pathname;
+                window.open(envDomain + window.location.pathname, '_blank');
             }
         }
     });
