@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         netDoktor Content Extractor for IR
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @description  Extract and clean content from netdoktor.de; add TOC labels next to h2 elements; unwrap spans, clean <li>, etc. — only active on article pages; ignores block-link-box and aside elements; extracts full tables from <nd-table> tags and normalizes thead->tbody + th->td while removing hidden columns.
 // @match        https://www.netdoktor.de/*
 // @downloadURL  https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/netDoktor%20Content%20Extractor%20for%20IR.user.js
@@ -84,9 +84,18 @@
         );
 
         // Exclude elements inside <nd-table>
-        const allElements = Array.from(nodeList).filter(el =>
-            el.tagName.toLowerCase() === 'nd-table' || !el.closest('nd-table')
-        );
+        // Also exclude elements that are descendants of .patient-info-text (we will handle the .patient-info-text node itself)
+        const allElements = Array.from(nodeList).filter(el => {
+            const tag = el.tagName.toLowerCase();
+            // always keep nd-table itself
+            if (tag === 'nd-table') return true;
+            // skip anything inside nd-table
+            if (el.closest('nd-table')) return false;
+            // if element is inside a .patient-info-text but is not that .patient-info-text element, exclude it
+            const parentPatient = el.closest('.patient-info-text');
+            if (parentPatient && parentPatient !== el) return false;
+            return true;
+        });
 
         let lastTitle = null;
 
@@ -101,11 +110,22 @@
             }
 
             if (el.classList.contains('patient-info-text')) {
-                const transformed = transformInlineTags(el);
+                // If there's a nested <p data-block-key="..."> use its content only (transformed),
+                // and do not emit the nested <p> separately.
+                const specialP = el.querySelector('p[data-block-key]');
+                let innerHTML;
+                if (specialP) {
+                    const transformedSpecial = transformInlineTags(specialP);
+                    innerHTML = transformedSpecial.innerHTML;
+                } else {
+                    const transformed = transformInlineTags(el);
+                    innerHTML = transformed.innerHTML;
+                }
+
                 let className = 'text';
                 if (lastTitle?.includes('Hinweis')) className = 'patient-information';
                 if (lastTitle?.includes('Achtung')) className = 'patient-warning';
-                outputElements.push(wrapAs(className, transformed.innerHTML));
+                outputElements.push(wrapAs(className, innerHTML));
                 lastTitle = null;
                 continue;
             }
@@ -129,9 +149,10 @@
                             // Convert remaining <th> → <td>
                             Array.from(row.querySelectorAll('th')).forEach(th => {
                                 const td = document.createElement('td');
+                                // copy attributes except class="hidden"
                                 for (let i = 0; i < th.attributes.length; i++) {
                                     const a = th.attributes[i];
-                                    if (a.name === 'class' && a.value.includes('hidden')) continue;
+                                    if (a.name === 'class' && a.value.split(/\s+/).includes('hidden')) continue;
                                     td.setAttribute(a.name, a.value);
                                 }
                                 td.innerHTML = th.innerHTML;
@@ -149,13 +170,14 @@
                     existingTbodies.forEach(tb => {
                         const rows = Array.from(tb.querySelectorAll('tr'));
                         rows.forEach(row => {
+                            // remove hidden cells
                             row.querySelectorAll('th.hidden, td.hidden').forEach(cell => cell.remove());
                             newTbody.appendChild(row);
                         });
                         tb.remove();
                     });
 
-                    // 3) Replace multiple tbodies with the single new one
+                    // 3) Append the single combined tbody to the cloned table
                     clonedTable.appendChild(newTbody);
                     outputElements.push(clonedTable);
                 }
@@ -165,7 +187,9 @@
             // --- Skip <li> handled within lists ---
             if (tag === 'li') {
                 const parentTag = el.parentElement?.tagName?.toLowerCase();
-                if (parentTag === 'ul' || parentTag === 'ol') continue;
+                if (parentTag === 'ul' || parentTag === 'ol') {
+                    continue;
+                }
             }
 
             // --- Regular elements ---
