@@ -9,7 +9,7 @@
 // @include     /^https?://stage\.tech\.netdoktor\.de/
 // @include     /^https?://stage\.tech\.netdoktor\.at/
 // @include     /^https?://stage\.tech\.netdoktor\.ch/
-// @version     4.7
+// @version     4.8
 // @description Adds a helpful simian companion to netDoktor pages that provides information about various on-page elements.
 // @downloadURL https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
 // @updateURL   https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
@@ -124,7 +124,7 @@
       <span class="form-label">Go to article in Wagtail admin:</span><input id="gotoId" type="text" v-model="articleid" value="" placeholder="Enter article ID & confirm"/>
     </div>
     <div class="fixed-block">
-      <span class="form-label">Switch environment:</span><button class="button" @click="gotoEnv('stage')">Stage</button><button class="button" @click="gotoEnv('prod')">Prod</button><button class="button" @click="gotoEnv('legacy')">Legacy</button>
+      <span class="form-label">Switch environment:</span><button class="button" title="Zu Stage wechseln" @click="gotoEnv('stage')">Stage</button><button class="button" title="Zu Prod wechseln" @click="gotoEnv('prod')">Prod</button><button class="button" title="Zu Legacy wechseln" @click="gotoEnv('legacy')">Legacy</button><button class="button" title="Zu gleichem Pfad bei GPP wechseln" @click="gotoEnv('gpp')">GPP</button>
     </div>
     <info-block
       v-for="post in posts"
@@ -220,6 +220,7 @@
                 var envDomain = 'https://www.netdoktor.' + tld;
                 if(envName == 'stage') envDomain = 'https://stage.tech.netdoktor.' + tld;
                 if(envName == 'legacy') envDomain = 'https://legacy.netdoktor.' + tld;
+                if(envName == 'gpp') envDomain = 'https://www.gesundheitsportal-privat.de';
                 window.open(envDomain + window.location.pathname, '_blank');
             }
         }
