@@ -1,9 +1,11 @@
 // ==UserScript==
 // @name         netDoktor Content Extractor for IR
 // @namespace    http://tampermonkey.net/
-// @version      2.1
-// @description  Extract and clean content from netdoktor.de; add TOC labels next to h2 elements; unwrap spans, clean <li>, etc. — only active on article pages; ignores block-link-box and aside elements; extracts full tables from <nd-table> tags and normalizes thead->tbody + th->td while removing hidden columns.
+// @version      2.2
+// @description  Extract and clean content from netDoktor; add TOC labels next to h2 elements; unwrap spans, clean <li>, etc. — only active on article pages; ignores block-link-box and aside elements; extracts full tables from <nd-table> tags and normalizes thead->tbody + th->td while removing hidden columns.
 // @match        https://www.netdoktor.de/*
+// @match        https://www.netdoktor.at/*
+// @match        https://www.netdoktor.ch/*
 // @downloadURL  https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/netDoktor%20Content%20Extractor%20for%20IR.user.js
 // @updateURL    https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/netDoktor%20Content%20Extractor%20for%20IR.user.js
 // @grant        none
@@ -16,7 +18,7 @@
         // Only add button for articles
         const headHTML = document.head ? document.head.innerHTML : '';
         if (!headHTML.includes('"pageType": "article"')) {
-            console.log('NetDoktor Extractor: Skipping — not an article page.');
+            console.log('netDoktor Extractor: Skipping — not an article page.');
             return;
         }
 
