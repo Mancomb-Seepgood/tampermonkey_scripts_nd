@@ -9,7 +9,7 @@
 // @include     /^https?://stage\.tech\.netdoktor\.de/
 // @include     /^https?://stage\.tech\.netdoktor\.at/
 // @include     /^https?://stage\.tech\.netdoktor\.ch/
-// @version     4.8
+// @version     4.9
 // @description Adds a helpful simian companion to netDoktor pages that provides information about various on-page elements.
 // @downloadURL https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
 // @updateURL   https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
@@ -21,7 +21,7 @@
 // ==/UserScript==
 
 (function (window) {
-    let version = "4.7";
+    let version = "4.9";
     let appTemplate = `<style>
   .vue-monkey {
     display: none;
@@ -126,6 +126,9 @@
     <div class="fixed-block">
       <span class="form-label">Switch environment:</span><button class="button" title="Zu Stage wechseln" @click="gotoEnv('stage')">Stage</button><button class="button" title="Zu Prod wechseln" @click="gotoEnv('prod')">Prod</button><button class="button" title="Zu Legacy wechseln" @click="gotoEnv('legacy')">Legacy</button><button class="button" title="Zu gleichem Pfad bei GPP wechseln" @click="gotoEnv('gpp')">GPP</button>
     </div>
+    <div class="fixed-block">
+      <span class="form-label">Switch locale:</span><button class="button" title="Zu DE wechseln" @click="gotoEnv('nd_de')">DE</button><button class="button" title="Zu AT wechseln" @click="gotoEnv('nd_at')">AT</button><button class="button" title="Zu CH wechseln" @click="gotoEnv('nd_ch')">CH</button>
+    </div>
     <info-block
       v-for="post in posts"
       v-bind:post="post"
@@ -221,6 +224,9 @@
                 if(envName == 'stage') envDomain = 'https://stage.tech.netdoktor.' + tld;
                 if(envName == 'legacy') envDomain = 'https://legacy.netdoktor.' + tld;
                 if(envName == 'gpp') envDomain = 'https://www.gesundheitsportal-privat.de';
+                if(envName == 'nd_de') envDomain = 'https://www.netdoktor.de';
+                if(envName == 'nd_at') envDomain = 'https://www.netdoktor.at';
+                if(envName == 'nd_ch') envDomain = 'https://www.netdoktor.ch';
                 window.open(envDomain + window.location.pathname, '_blank');
             }
         }
