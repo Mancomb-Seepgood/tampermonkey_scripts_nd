@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wagtail Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.9.1
+// @version      1.9.2
 // @description  Adds utility buttons for Wagtail
 // @author       Ben
 // @match        https://www.netdoktor.de/*
@@ -28,11 +28,12 @@ function extractPageId() {
 let isHovering = {
     parent: false,
     edit: false,
-    pagetree: false
+    pagetree: false,
+    searchgpp: false
 };
 
 function updateHoverState() {
-    if (!isHovering.parent && !isHovering.edit && !isHovering.pagetree) {
+    if (!isHovering.parent && !isHovering.edit && !isHovering.pagetree && !isHovering.searchgpp) {
         childContainer.style.maxHeight = '0';
     }
 }
@@ -110,6 +111,25 @@ pagetreeButton.style.cursor = 'pointer';
 pagetreeButton.style.transitionDuration = '0.4s';
 pagetreeButton.style.webkitTransitionDuration = '0.4s';
 
+// Create the "Search for GPP" button
+const searchGppButton = document.createElement('button');
+searchGppButton.textContent = 'Search for GPP';
+searchGppButton.style.backgroundColor = '#00bef7';
+searchGppButton.style.border = 'none';
+searchGppButton.style.borderRadius = '6px';
+searchGppButton.style.color = 'white';
+searchGppButton.style.opacity = '0.7';
+searchGppButton.style.padding = '8px 16px';
+searchGppButton.style.textAlign = 'center';
+searchGppButton.style.textDecoration = 'none';
+searchGppButton.style.display = 'inline-block';
+searchGppButton.style.fontSize = '17px';
+searchGppButton.style.fontWeight = 'bold';
+searchGppButton.style.margin = '4px 2px';
+searchGppButton.style.cursor = 'pointer';
+searchGppButton.style.transitionDuration = '0.4s';
+searchGppButton.style.webkitTransitionDuration = '0.4s';
+
 // Add hover effect to parent button
 [parentButton].forEach(button => {
     button.addEventListener('mouseover', function() {
@@ -124,7 +144,7 @@ pagetreeButton.style.webkitTransitionDuration = '0.4s';
 });
 
 // Add hover effect to child buttons
-[editButton, pagetreeButton].forEach(button => {
+[editButton, pagetreeButton, searchGppButton].forEach(button => {
     button.addEventListener('mouseover', function() {
         button.style.boxShadow = '0 2px 2px 0 rgba(0,0,0,0.24)';
         button.style.opacity = '1.0';
@@ -139,7 +159,7 @@ pagetreeButton.style.webkitTransitionDuration = '0.4s';
 // Hover handling for visibility control
 parentButton.addEventListener('mouseenter', () => {
     isHovering.parent = true;
-    childContainer.style.maxHeight = '100px';
+    childContainer.style.maxHeight = '160px';
 });
 parentButton.addEventListener('mouseleave', () => {
     isHovering.parent = false;
@@ -162,9 +182,18 @@ pagetreeButton.addEventListener('mouseleave', () => {
     setTimeout(updateHoverState, 1000);
 });
 
+searchGppButton.addEventListener('mouseenter', () => {
+    isHovering.searchgpp = true;
+});
+searchGppButton.addEventListener('mouseleave', () => {
+    isHovering.searchgpp = false;
+    setTimeout(updateHoverState, 1000);
+});
+
 // Append child buttons to the container
 childContainer.appendChild(editButton);
 childContainer.appendChild(pagetreeButton);
+childContainer.appendChild(searchGppButton);
 
 // Run only on specific URL patterns
 if (
@@ -255,7 +284,6 @@ editButton.addEventListener('click', function () {
     }
 })();
 
-
 // Add click event to the "Open in pagetree" button
 pagetreeButton.addEventListener('click', function() {
     const pageId = extractPageId();
@@ -266,4 +294,20 @@ pagetreeButton.addEventListener('click', function() {
         alert('PageID not found!');
     }
 });
+
+// Add click event to the "Search for GPP" button
+searchGppButton.addEventListener('click', function() {
+    const h1 = document.querySelector('h1');
+
+    if (!h1 || !h1.textContent.trim()) {
+        alert('H1 not found!');
+        return;
+    }
+
+    const searchTerm = encodeURIComponent(h1.textContent.trim());
+    const searchUrl = `https://admin.netdoktor.de/admin/search/advanced/?q=${searchTerm}&portal=2`;
+
+    window.open(searchUrl, '_blank');
+});
+
 })();
