@@ -13,7 +13,7 @@
 // @description Adds a helpful simian companion to netDoktor pages that provides information about various on-page elements.
 // @downloadURL https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
 // @updateURL   https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
-// @grant       none
+// @grant       GM_xmlhttpRequest
 // @require     https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.14/vue.min.js
 // @require     https://code.jquery.com/jquery-3.4.1.min.js
 // @run-at      document-body
@@ -121,7 +121,11 @@
   <div class="open-layer" :class="[!isClosed ? 'shown' : 'hidden']" v-on:click="toggle">
     <div class="fixed-block">
       <form class="goto-id" @submit="gotoArticle" onsubmit="return false;">
-      <span class="form-label">Go to article in Wagtail admin:</span><input id="gotoId" type="text" v-model="articleid" value="" placeholder="Enter article ID & confirm"/>
+        <span class="form-label">Go to article in Wagtail admin:</span>
+        <input id="gotoId" type="text" v-model="articleid" value="" placeholder="Enter article ID & confirm"/>
+        <button class="button" title="Datum bei äquivalenter GPP-URL prüfen" type="button" @click.stop="checkGppDate">Check GPP date</button>
+        <input type="text" readonly :value="gppDate" style="margin-left:8px; width:140px;" />
+  </form>
     </div>
     <div class="fixed-block">
       <span class="form-label">Switch environment:</span><button class="button" title="Zu Stage wechseln" @click="gotoEnv('stage')">Stage</button><button class="button" title="Zu Prod wechseln" @click="gotoEnv('prod')">Prod</button><button class="button" title="Zu Legacy wechseln" @click="gotoEnv('legacy')">Legacy</button><button class="button" title="Zu gleichem Pfad bei GPP wechseln" @click="gotoEnv('gpp')">GPP</button>
@@ -150,6 +154,7 @@
             posts: [
             ],
             articleid: null,
+            gppDate: "not checked",
         },
         mounted: function () {
             console.log("vue monkey mounted")
@@ -173,9 +178,9 @@
             helpInformation(this.posts);
 
             this.posts.push({
-            title: "Wagtail Monkey",
-            info: [
-                { label: "Version", value: version },
+                title: "Wagtail Monkey",
+                info: [
+                    { label: "Version", value: version },
                 ]});
         },
         created: function () {
@@ -183,7 +188,7 @@
             window.addEventListener('keydown', (e) => {
                 console.log(e.key);
                 if (e.key == 'Escape') {
-//                    this.showModal = !this.showModal;
+                    //                    this.showModal = !this.showModal;
                 }
             });
         },
@@ -228,6 +233,55 @@
                 if(envName == 'nd_at') envDomain = 'https://www.netdoktor.at';
                 if(envName == 'nd_ch') envDomain = 'https://www.netdoktor.ch';
                 window.open(envDomain + window.location.pathname, '_blank');
+            },
+            checkGppDate: function() {
+                this.gppDate = "loading...";
+
+                var gppUrl = 'https://www.gesundheitsportal-privat.de' + window.location.pathname;
+
+                GM_xmlhttpRequest({
+                    method: "GET",
+                    url: gppUrl,
+
+                    onload: (response) => {
+                        try {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(
+                                response.responseText,
+                                "text/html"
+                            );
+
+                            const sections = doc.querySelectorAll(
+                                '#trust-block-content .trust-block-section'
+                            );
+
+                            let foundDate = null;
+
+                            sections.forEach(section => {
+                                const label = section.querySelector('.label');
+                                const time = section.querySelector('time');
+
+                                if (
+                                    label &&
+                                    label.textContent.trim().startsWith('Datum') &&
+                                    time
+                                ) {
+                                    foundDate = time.textContent.trim();
+                                }
+                            });
+
+                            this.gppDate = foundDate || "not found";
+                        } catch (e) {
+                            console.error("Error parsing GPP page:", e);
+                            this.gppDate = "parse error";
+                        }
+                    },
+
+                    onerror: (error) => {
+                        console.error("Error loading GPP page:", error);
+                        this.gppDate = "request error";
+                    }
+                });
             }
         }
     });
@@ -264,7 +318,7 @@
                 { label: "Page Type", value: dataLayer.get("page.pageType") || "not set" },
                 { label: "Article Type", value: dataLayer.get("page.articleTypeFormatted") || "not set" },
                 { label: "Num. Sections", value: dataLayer.get("page.articleLength.section") || "not set" },
-                ]});
+            ]});
     }
 
     function adInformation(dataLayer, posts) {
@@ -279,7 +333,7 @@
                 { label: "Layout", value: dataLayer.get("page.content.ads.layout") || "not set" },
                 { label: "Edi-Hub", value: dataLayer.get("page.content.ads.edihub") ? "yes" : "no" },
                 { label: "Ads Disabled?", value: JSON.parse(document.getElementById("nd-config").textContent).ads_disabled ? "yes" : "no" },
-                ]});
+            ]});
     }
 
     function helpInformation(posts) {
@@ -288,7 +342,7 @@
             info: [
                 { label: "Copy article ID", value: "Just click the number underneath the monkey" },
                 { label: "What's the deal with the crown & sunglasses?", value: "If the monkey is sporting a crown and sunglasses, a CS-ID is set on the page" },
-                ]});
+            ]});
     }
 
     function onPageformation(dataLayer, posts) {
@@ -337,7 +391,7 @@
                 { label: "3-Question Interviews", value: ""+threeQuestionInterviewCount },
                 { label: "Num. Sources", value: ""+sourcesCount },
                 { label: "QT & LVC", value: ""+qtAndLvcCount },
-                ]});
+            ]});
     }
 
     window.vueMonkey = {
