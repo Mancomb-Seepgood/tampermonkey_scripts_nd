@@ -9,7 +9,7 @@
 // @include     /^https?://stage\.tech\.netdoktor\.de/
 // @include     /^https?://stage\.tech\.netdoktor\.at/
 // @include     /^https?://stage\.tech\.netdoktor\.ch/
-// @version     4.9
+// @version     4.9.1
 // @description Adds a helpful simian companion to netDoktor pages that provides information about various on-page elements.
 // @downloadURL https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
 // @updateURL   https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
@@ -21,7 +21,7 @@
 // ==/UserScript==
 
 (function (window) {
-    let version = "4.9";
+    let version = "4.9.1";
     let appTemplate = `<style>
   .vue-monkey {
     display: none;
@@ -263,7 +263,7 @@
 
                                 if (
                                     label &&
-                                    label.textContent.trim().startsWith('Datum') &&
+                                    (label.textContent.trim().startsWith('Datum') || label.textContent.trim().startsWith('Aktualisiert am')) &&
                                     time
                                 ) {
                                     foundDate = time.textContent.trim();
