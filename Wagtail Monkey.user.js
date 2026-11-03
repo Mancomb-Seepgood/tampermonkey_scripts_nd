@@ -2,27 +2,30 @@
 // @name        Wagtail Monkey
 // @namespace   ND
 // @author      netDoktor
-// @include     /^https?://www\.netdoktor\.de/
-// @include     /^https?://www\.netdoktor\.at/
-// @include     /^https?://www\.netdoktor\.ch/
-// @include     /^https?://rezepte\.netdoktor\.at/
-// @include     /^https?://stage\.tech\.netdoktor\.de/
-// @include     /^https?://stage\.tech\.netdoktor\.at/
-// @include     /^https?://stage\.tech\.netdoktor\.ch/
-// @version     4.9.1
+// @include     /^https?:\/\/www\.netdoktor\.de\//
+// @include     /^https?:\/\/www\.netdoktor\.at\//
+// @include     /^https?:\/\/www\.netdoktor\.ch\//
+// @include     /^https?:\/\/rezepte\.netdoktor\.at\//
+// @include     /^https?:\/\/stage\.tech\.netdoktor\.de\//
+// @include     /^https?:\/\/stage\.tech\.netdoktor\.at\//
+// @include     /^https?:\/\/stage\.tech\.netdoktor\.ch\//
+// @version     5.0.0
 // @description Adds a helpful simian companion to netDoktor pages that provides information about various on-page elements.
 // @downloadURL https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
 // @updateURL   https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
 // @grant       GM_xmlhttpRequest
+// @connect     www.gesundheitsportal-privat.de
 // @require     https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.14/vue.min.js
-// @require     https://code.jquery.com/jquery-3.4.1.min.js
 // @run-at      document-body
 // @noframes
 // ==/UserScript==
 
-(function (window) {
-    let version = "4.9.1";
-    let appTemplate = `<style>
+(function () {
+    'use strict';
+
+    const version = '5.0.0';
+
+    const appTemplate = `<style>
   .vue-monkey {
     display: none;
     z-index: 10000001;
@@ -110,313 +113,341 @@
     margin-top: 0;
     margin-bottom: 0;
   }
-
 </style>
 <div id="vue-monkey-app" class="vue-monkey" :style="{ display: mountDisplay }">
   <div class="closed-layer" :class="[isClosed ? 'shown' : 'hidden']">
     <div v-on:click="toggle" class="image" :class="{ standard: !isCampaign, campaign: isCampaign }"></div>
-    <div v-on:click="copyContentId" class="id-label" :style="{ display: labelStyle }"><span class="id-text">{{message}}<span></div>
+    <div v-on:click="copyContentId" class="id-label" :style="{ display: labelStyle }"><span class="id-text">{{ message }}</span></div>
     <input type="hidden" id="coptToClipboard" :value="copyString">
   </div>
   <div class="open-layer" :class="[!isClosed ? 'shown' : 'hidden']" v-on:click="toggle">
     <div class="fixed-block">
-      <form class="goto-id" @submit="gotoArticle" onsubmit="return false;">
+      <form class="goto-id" @submit.prevent="gotoArticle">
         <span class="form-label">Go to article in Wagtail admin:</span>
-        <input id="gotoId" type="text" v-model="articleid" value="" placeholder="Enter article ID & confirm"/>
+        <input
+  id="gotoId"
+  type="text"
+  v-model="articleid"
+  placeholder="Enter article ID & confirm"
+  @keydown.enter.prevent.stop="gotoArticle"
+/>
         <button class="button" title="Datum bei äquivalenter GPP-URL prüfen" type="button" @click.stop="checkGppDate">Check GPP date</button>
         <input type="text" readonly :value="gppDate" style="margin-left:8px; width:140px;" />
-  </form>
+      </form>
     </div>
     <div class="fixed-block">
-      <span class="form-label">Switch environment:</span><button class="button" title="Zu Stage wechseln" @click="gotoEnv('stage')">Stage</button><button class="button" title="Zu Prod wechseln" @click="gotoEnv('prod')">Prod</button><button class="button" title="Zu Legacy wechseln" @click="gotoEnv('legacy')">Legacy</button><button class="button" title="Zu gleichem Pfad bei GPP wechseln" @click="gotoEnv('gpp')">GPP</button>
+      <span class="form-label">Switch environment:</span><button class="button" title="Zu Stage wechseln" @click="gotoEnv('stage')">Stage</button><button class="button" title="Zu Prod wechseln" @click="gotoEnv('prod')">Prod</button><button class="button" title="Zu gleichem Pfad bei GPP wechseln" @click="gotoEnv('gpp')">GPP</button>
     </div>
     <div class="fixed-block">
       <span class="form-label">Switch locale:</span><button class="button" title="Zu DE wechseln" @click="gotoEnv('nd_de')">DE</button><button class="button" title="Zu AT wechseln" @click="gotoEnv('nd_at')">AT</button><button class="button" title="Zu CH wechseln" @click="gotoEnv('nd_ch')">CH</button>
     </div>
     <info-block
-      v-for="post in posts"
-      v-bind:post="post"
+      v-for="(post, index) in posts"
+      :key="index"
+      :post="post"
     ></info-block>
-
   </div>
 </div>`;
 
-    let vueMonkeyApp = new Vue({
-        data: {
-            didMount: false,
-            message: "",
-            styleButtonBackground: "'https://cdn.netdoktor.de/images/internal/IR_Monkey_v2.jpg'",
-            isCampaign: false,
-            labelStyle: "none",
-            isClosed: true,
-            mountDisplay: "none",
-            copyString: "",
-            posts: [
-            ],
-            articleid: null,
-            gppDate: "not checked",
-        },
-        mounted: function () {
-            console.log("vue monkey mounted")
+    function readConfig() {
+        const element = document.getElementById('nd-config');
 
-            // reference dataLayer
-            var gtm = google_tag_manager["GTM-5ZG6TN3D"];
-            this.dataLayer = gtm.dataLayer;
-
-            // page id
-            this.message = contentId(this.dataLayer);
-
-            // cs id
-            this.isCampaign = isCampaignDataLayer(this.dataLayer);
-
-            this.labelStyle = "block";
-            this.mountDisplay = "block";
-
-            metaInformation(this.dataLayer, this.posts);
-            adInformation(this.dataLayer, this.posts);
-            onPageformation(this.dataLayer, this.posts);
-            helpInformation(this.posts);
-
-            this.posts.push({
-                title: "Wagtail Monkey",
-                info: [
-                    { label: "Version", value: version },
-                ]});
-        },
-        created: function () {
-            console.log("vue monkey created");
-            window.addEventListener('keydown', (e) => {
-                console.log(e.key);
-                if (e.key == 'Escape') {
-                    //                    this.showModal = !this.showModal;
-                }
-            });
-        },
-        methods: {
-            toggle: function (event) {
-                console.log("toggled");
-                if((event.srcElement !== undefined) && (event.srcElement.id == "gotoId")) {
-                    return;
-                }
-                if((event.srcElement !== undefined) && (event.srcElement.tagName == "BUTTON")) {
-                    return;
-                }
-                console.log(event);
-                this.isClosed = !this.isClosed;
-            },
-            copyContentId: function (event) {
-                this.copyString = this.message;
-                let copyToClipboard = document.querySelector('#coptToClipboard');
-                copyToClipboard.setAttribute('type', 'text');
-                copyToClipboard.select();
-                try {
-                    var successful = document.execCommand('copy');
-                    var msg = successful ? 'successful' : 'unsuccessful';
-                    console.log('Id was copied ' + msg);
-                } catch (err) {
-                    console.log('Oops, unable to copy');
-                }
-                copyToClipboard.setAttribute('type', 'hidden');
-                window.getSelection().removeAllRanges();
-            },
-            gotoArticle: function (event) {
-                console.log(this.articleid);
-                window.location.href = "https://admin.netdoktor.de/admin/pages/" + this.articleid;
-            },
-            gotoEnv: function(envName) {
-                var tld = window.location.hostname.match(/netdoktor\.(.*?)$/)[1];
-                var envDomain = 'https://www.netdoktor.' + tld;
-                if(envName == 'stage') envDomain = 'https://stage.tech.netdoktor.' + tld;
-                if(envName == 'legacy') envDomain = 'https://legacy.netdoktor.' + tld;
-                if(envName == 'gpp') envDomain = 'https://www.gesundheitsportal-privat.de';
-                if(envName == 'nd_de') envDomain = 'https://www.netdoktor.de';
-                if(envName == 'nd_at') envDomain = 'https://www.netdoktor.at';
-                if(envName == 'nd_ch') envDomain = 'https://www.netdoktor.ch';
-                window.open(envDomain + window.location.pathname, '_blank');
-            },
-            checkGppDate: function() {
-                this.gppDate = "loading...";
-
-                var gppUrl = 'https://www.gesundheitsportal-privat.de' + window.location.pathname;
-
-                GM_xmlhttpRequest({
-                    method: "GET",
-                    url: gppUrl,
-
-                    onload: (response) => {
-                        try {
-                            const parser = new DOMParser();
-                            const doc = parser.parseFromString(
-                                response.responseText,
-                                "text/html"
-                            );
-
-                            const sections = doc.querySelectorAll(
-                                '#trust-block-content .trust-block-section'
-                            );
-
-                            let foundDate = null;
-
-                            sections.forEach(section => {
-                                const label = section.querySelector('.label');
-                                const time = section.querySelector('time');
-
-                                if (
-                                    label &&
-                                    (label.textContent.trim().startsWith('Datum') || label.textContent.trim().startsWith('Aktualisiert am')) &&
-                                    time
-                                ) {
-                                    foundDate = time.textContent.trim();
-                                }
-                            });
-
-                            this.gppDate = foundDate || "not found";
-                        } catch (e) {
-                            console.error("Error parsing GPP page:", e);
-                            this.gppDate = "parse error";
-                        }
-                    },
-
-                    onerror: (error) => {
-                        console.error("Error loading GPP page:", error);
-                        this.gppDate = "request error";
-                    }
-                });
-            }
+        if (!element) {
+            console.warn('Wagtail Monkey: #nd-config was not found.');
+            return {};
         }
-    });
 
-    Vue.component('info-block', {
-        props: ['post'],
-        template: `<div class="info-block"><span class="title">{{ post.title }}</span><info-block-label v-for="info in post.info" v-bind:info="info"></info-block-label></div>`
-    });
-
-    Vue.component('info-block-label', {
-        props: ['info'],
-        template: `<div class="info-block-detail"><span class="label">{{ info.label }}:</span><span class="value">{{ info.value }}</span></div>`
-    });
-
-    function contentId(dataLayer) {
-        if(dataLayer.get("page.pageType") == "index") {
-            return (dataLayer.get("page.mediaPageType") || "index")+" "+dataLayer.get("page.content.ads.pageId");
-        } else if(dataLayer.get("page.pageType") != "index") {
-            return dataLayer.get("page.content.ads.pageId");
+        try {
+            return JSON.parse(element.textContent);
+        } catch (error) {
+            console.error('Wagtail Monkey: could not parse #nd-config.', error);
+            return {};
         }
-        return "No ID"
     }
 
-    function isCampaignDataLayer(dataLayer) {
-        return (dataLayer.get("page.content.ads.csid") !== undefined) && (dataLayer.get("page.content.ads.csid") != "")
+    function firstSet(...values) {
+        return values.find(value =>
+            value !== undefined &&
+            value !== null &&
+            value !== '' &&
+            value !== 'none'
+        );
     }
 
-    function metaInformation(dataLayer, posts) {
+    function displayValue(value) {
+        return value === undefined || value === null || value === ''
+            ? 'not set'
+            : String(value);
+    }
+
+    function pageData(config) {
+        const analytics = config.analytics || {};
+        const dimensions = analytics.customDimensions || {};
+
+        return {
+            ads: config.ads || {},
+            page: dimensions.page || {}
+        };
+    }
+
+    function contentId(data) {
+        const id = firstSet(data.ads.pageId, data.page.id);
+        if (id === undefined) return 'No ID';
+
+        const pageType = firstSet(data.page.contentType, data.page.pageType);
+
+        if (pageType === 'index') {
+            const mediaPageType = firstSet(
+                data.page.contentMediaType,
+                data.page.mediaPageType
+            ) || 'index';
+
+            return mediaPageType + ' ' + id;
+        }
+
+        return String(id);
+    }
+
+    function campaignId(data) {
+        return firstSet(data.ads.csid, data.page.csid);
+    }
+
+    function metaInformation(data, posts) {
+    const page = data.page;
+
+    const sectionCount = [...document.querySelectorAll('section.section.article-grid')]
+        .filter(section =>
+            [...section.classList].some(className => /^section-\d+$/.test(className))
+        ).length;
+
+    posts.push({
+        title: 'Meta Info',
+        info: [
+            { label: 'ID', value: contentId(data) },
+            { label: 'Main Topic', value: displayValue(firstSet(page.mainFormatted, page.topic && page.topic.mainFormatted)) },
+            { label: 'Page Type', value: displayValue(firstSet(page.contentType, page.pageType)) },
+            { label: 'Article Type', value: displayValue(firstSet(page.contentMediaType, page.articleTypeFormatted)) },
+            { label: 'Num. Sections', value: String(sectionCount) }
+        ]
+    });
+}
+
+    function adInformation(config, data, posts) {
+        const ads = data.ads;
+
         posts.push({
-            title: "Meta Info",
+            title: 'Ad Info',
             info: [
-                { label: "ID", value: contentId(dataLayer) },
-                { label: "Main Topic", value: dataLayer.get("page.topic.mainFormatted") || "not set" },
-                { label: "Page Type", value: dataLayer.get("page.pageType") || "not set" },
-                { label: "Article Type", value: dataLayer.get("page.articleTypeFormatted") || "not set" },
-                { label: "Num. Sections", value: dataLayer.get("page.articleLength.section") || "not set" },
-            ]});
+                { label: 'CS-ID', value: displayValue(campaignId(data)) },
+                { label: 'Exclusive', value: ads.campaignIsExclusive ? 'yes' : 'no' },
+                { label: 'Campaign Type', value: displayValue(ads.campaignType) },
+                { label: 'Category', value: displayValue(ads.category) },
+                { label: 'Subtopic', value: displayValue(ads.subtopic) },
+                { label: 'Layout', value: displayValue(ads.layout) },
+                { label: 'Edi-Hub', value: ads.edihub ? 'yes' : 'no' },
+                { label: 'Ads Disabled?', value: config.ads_disabled ? 'yes' : 'no' }
+            ]
+        });
     }
 
-    function adInformation(dataLayer, posts) {
+    function onPageInformation(posts) {
+        const count = selector => String(document.querySelectorAll(selector).length);
+
         posts.push({
-            title: "Ad Info",
+            title: 'OnPage Info',
             info: [
-                { label: "CS-ID", value: dataLayer.get("page.content.ads.csid") || "not set" },
-                { label: "Exclusive", value: dataLayer.get("page.content.ads.campaignIsExclusive") ? "yes" : "no" },
-                { label: "Campaign Type", value: dataLayer.get("page.content.ads.campaignType") || "not set" },
-                { label: "Category", value: dataLayer.get("page.content.ads.category") || "not set" },
-                { label: "Subtopic", value: dataLayer.get("page.content.ads.subtopic") || "not set" },
-                { label: "Layout", value: dataLayer.get("page.content.ads.layout") || "not set" },
-                { label: "Edi-Hub", value: dataLayer.get("page.content.ads.edihub") ? "yes" : "no" },
-                { label: "Ads Disabled?", value: JSON.parse(document.getElementById("nd-config").textContent).ads_disabled ? "yes" : "no" },
-            ]});
+                { label: 'Wordlinks', value: count('.wlm-link') },
+                { label: 'Ad Slots Desktop', value: count('nd-advertisement.content-ad') },
+                { label: 'Ad Slots Mobile (incl. Footer & Header)', value: count('nd-ad-slot[slot="mobile"]') },
+                { label: 'Ad Slots Desktop (Index)', value: count('.plugin-ad-container') },
+                { label: 'Image Gallery', value: count('.image-gallery-block') },
+                { label: 'Link Box', value: count('.block-link-box') },
+                { label: 'Video', value: count('.video.with-description') },
+                { label: 'Inline Images', value: count('.block-image') },
+                { label: '3-Question Interviews', value: count('.block-three-questions') },
+                { label: 'Num. Sources', value: count('#trust-block-content > div.trust-block-section.trust-block-sources > ul > li') },
+                { label: 'QT & LVC', value: count('.block-tool-config.quick-test') }
+            ]
+        });
     }
 
     function helpInformation(posts) {
         posts.push({
-            title: "Help",
+            title: 'Help',
             info: [
-                { label: "Copy article ID", value: "Just click the number underneath the monkey" },
-                { label: "What's the deal with the crown & sunglasses?", value: "If the monkey is sporting a crown and sunglasses, a CS-ID is set on the page" },
-            ]});
+                { label: 'Copy article ID', value: 'Just click the number underneath the monkey' },
+                { label: "What's the deal with the crown & sunglasses?", value: 'If the monkey is sporting a crown and sunglasses, a CS-ID is set on the page' }
+            ]
+        });
     }
 
-    function onPageformation(dataLayer, posts) {
-        //wordlink counter
-        let wordlinkCount = document.getElementsByClassName("wlm-link").length;
-        //ad slots desktop counter
-        let adSlotsDesktopCount = document.querySelectorAll("nd-advertisement[class='content-ad']").length;
-        //ad slots mobile counter
-        let adSlotsMobileCount = document.querySelectorAll("nd-ad-slot[slot='mobile']").length;
-        //ad slots cms desktop counter
-        let adSlotsDesktopCMSCount = document.getElementsByClassName("plugin-ad-container").length;
-        //image gallery counter
-        let imageGalleryCount = document.getElementsByClassName("image-gallery-block").length;
-        //video counter
-        let videoCount = document.getElementsByClassName("video with-description").length;
-        //inline image counter
-        let inlineImageCount = document.getElementsByClassName("block-image").length;
-        //three question interview counter
-        let threeQuestionInterviewCount = document.getElementsByClassName("block-three-questions").length;
-        //sc teaser counter - currently not in use
-        let scTeaserCount = document.getElementsByClassName("ndpm-contentteaser-sc-container").length;
-        //lvc teaser counter - currently not in use
-        let lvcTeaserCount = document.getElementsByClassName("ndpm-contentteaser-lwc-container").length;
-        //hpf teaser counter - currently not in use
-        let hpfTeaserCount = document.getElementsByClassName("ndpm-contentteaser-hpf-container").length;
-        //hpf teaser counter - currently not in use
-        let ndtoolsTeaserCount = document.getElementsByClassName("ndpm-ndtools-wrapper").length;
-        //qt/lvc counter
-        let qtAndLvcCount = document.getElementsByClassName("block-tool-config quick-test").length;
-        //link box counter
-        let linkBoxCount = document.getElementsByClassName("block-link-box").length;
-        //sources counter
-        let sourcesCount = document.querySelectorAll("#trust-block-content > div.trust-block-section.trust-block-sources > ul > li").length;
+    function startApp() {
+        if (!document.body || document.getElementById('vue-monkey-app')) return;
+
+        const config = readConfig();
+        const data = pageData(config);
+        const posts = [];
+
+        metaInformation(data, posts);
+        adInformation(config, data, posts);
+        onPageInformation(posts);
+        helpInformation(posts);
 
         posts.push({
-            title: "OnPage Info",
-            info: [
-                { label: "Wordlinks", value: ""+wordlinkCount },
-                { label: "Ad Slots Desktop", value: ""+adSlotsDesktopCount },
-                { label: "Ad Slots Mobile (incl. Footer & Header)", value: ""+adSlotsMobileCount },
-                { label: "Ad Slots Desktop (Index)", value: ""+adSlotsDesktopCMSCount },
-                { label: "Image Gallery", value: ""+imageGalleryCount },
-                { label: "Link Box", value: ""+linkBoxCount },
-                { label: "Video", value: ""+videoCount },
-                { label: "Inline Images", value: ""+inlineImageCount },
-                { label: "3-Question Interviews", value: ""+threeQuestionInterviewCount },
-                { label: "Num. Sources", value: ""+sourcesCount },
-                { label: "QT & LVC", value: ""+qtAndLvcCount },
-            ]});
+            title: 'Wagtail Monkey',
+            info: [{ label: 'Version', value: version }]
+        });
+
+        Vue.component('info-block-label', {
+            props: ['info'],
+            template: '<div class="info-block-detail"><span class="label">{{ info.label }}:</span><span class="value">{{ info.value }}</span></div>'
+        });
+
+        Vue.component('info-block', {
+            props: ['post'],
+            template: '<div class="info-block"><span class="title">{{ post.title }}</span><info-block-label v-for="(info, index) in post.info" :key="index" :info="info"></info-block-label></div>'
+        });
+
+        document.body.insertAdjacentHTML('beforeend', appTemplate);
+
+        new Vue({
+            el: '#vue-monkey-app',
+
+            data: {
+                message: contentId(data),
+                isCampaign: campaignId(data) !== undefined,
+                labelStyle: 'block',
+                isClosed: true,
+                mountDisplay: 'block',
+                copyString: '',
+                posts: posts,
+                articleid: null,
+                gppDate: 'not checked'
+            },
+
+            methods: {
+                toggle: function (event) {
+                    // Clicking a control must not close the overlay.
+                    if (event.target.closest('button, input, form')) return;
+                    this.isClosed = !this.isClosed;
+                },
+
+                copyContentId: function () {
+                    this.copyString = this.message;
+
+                    const input = document.getElementById('coptToClipboard');
+                    input.type = 'text';
+                    input.value = this.message;
+                    input.select();
+
+                    try {
+                        if (!document.execCommand('copy')) {
+                            console.warn('Wagtail Monkey: copying the ID was unsuccessful.');
+                        }
+                    } catch (error) {
+                        console.error('Wagtail Monkey: unable to copy the ID.', error);
+                    } finally {
+                        input.type = 'hidden';
+                        const selection = window.getSelection();
+                        if (selection) selection.removeAllRanges();
+                    }
+                },
+
+                gotoArticle: function () {
+                    const id = String(this.articleid || '').trim();
+                    if (!/^[0-9]+$/.test(id)) return;
+
+                    window.location.href = 'https://admin.netdoktor.de/admin/pages/' + id;
+                },
+
+                gotoEnv: function (envName) {
+                    const match = window.location.hostname.match(/netdoktor\.(.*?)$/);
+                    if (!match) return;
+
+                    const tld = match[1];
+                    let envDomain = 'https://www.netdoktor.' + tld;
+
+                    if (envName === 'stage') envDomain = 'https://stage.tech.netdoktor.' + tld;
+                    if (envName === 'gpp') envDomain = 'https://www.gesundheitsportal-privat.de';
+                    if (envName === 'nd_de') envDomain = 'https://www.netdoktor.de';
+                    if (envName === 'nd_at') envDomain = 'https://www.netdoktor.at';
+                    if (envName === 'nd_ch') envDomain = 'https://www.netdoktor.ch';
+
+                    window.open(envDomain + window.location.pathname, '_blank');
+                },
+
+                checkGppDate: function () {
+                    this.gppDate = 'loading...';
+
+                    const gppUrl =
+                        'https://www.gesundheitsportal-privat.de' +
+                        window.location.pathname;
+
+                    GM_xmlhttpRequest({
+                        method: 'GET',
+                        url: gppUrl,
+                        timeout: 15000,
+
+                        onload: response => {
+                            if (response.status < 200 || response.status >= 300) {
+                                this.gppDate = response.status === 404
+                                    ? 'not found'
+                                    : 'request error';
+                                return;
+                            }
+
+                            try {
+                                const doc = new DOMParser().parseFromString(
+                                    response.responseText,
+                                    'text/html'
+                                );
+
+                                const sections = doc.querySelectorAll(
+                                    '#trust-block-content .trust-block-section'
+                                );
+
+                                let foundDate = null;
+
+                                sections.forEach(section => {
+                                    const label = section.querySelector('.label');
+                                    const time = section.querySelector('time');
+
+                                    if (
+                                        label &&
+                                        time &&
+                                        (
+                                            label.textContent.trim().startsWith('Datum') ||
+                                            label.textContent.trim().startsWith('Aktualisiert am')
+                                        )
+                                    ) {
+                                        foundDate = time.textContent.trim();
+                                    }
+                                });
+
+                                this.gppDate = foundDate || 'not found';
+                            } catch (error) {
+                                console.error('Error parsing GPP page:', error);
+                                this.gppDate = 'parse error';
+                            }
+                        },
+
+                        onerror: error => {
+                            console.error('Error loading GPP page:', error);
+                            this.gppDate = 'request error';
+                        },
+
+                        ontimeout: () => {
+                            this.gppDate = 'request error';
+                        }
+                    });
+                }
+            }
+        });
     }
 
-    window.vueMonkey = {
-        isReady(successCallBack) {
-            jq(document).ready(function(){
-                successCallBack();
-            });
-        },
-        appendToBody() {
-            jq('body').append(appTemplate);
-        },
-        startApp() {
-            this.appendToBody();
-            setTimeout(() => {
-                vueMonkeyApp.$mount('#vue-monkey-app');
-            }, 1000);
-        }
-    };
-})(window);
-
-window.jq = $.noConflict(true);
-
-(function () {
-    'use strict';
-    vueMonkey.isReady(function () {
-        vueMonkey.startApp();
-    });
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', startApp, { once: true });
+    } else {
+        startApp();
+    }
 })();
