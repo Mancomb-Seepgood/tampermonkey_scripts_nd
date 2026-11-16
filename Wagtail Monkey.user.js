@@ -9,7 +9,7 @@
 // @include     /^https?:\/\/stage\.tech\.netdoktor\.de\//
 // @include     /^https?:\/\/stage\.tech\.netdoktor\.at\//
 // @include     /^https?:\/\/stage\.tech\.netdoktor\.ch\//
-// @version     5.1.0
+// @version     5.1.1
 // @description Adds a helpful simian companion to netDoktor pages that provides information about various on-page elements.
 // @downloadURL https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
 // @updateURL   https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
@@ -21,7 +21,7 @@
 // ==/UserScript==
 (function() {
     'use strict';
-    const version = '5.1.0';
+    const version = '5.1.1';
     const appTemplate = `<style>
   .vue-monkey {
     display: none;
@@ -348,11 +348,11 @@
                 },
                 {
                     label: 'H2s w/o sections',
-                    value: String([...document.querySelectorAll('div.article-content h2')].filter(isAdditionalH2InNumberedSection).length)
+                    value: String([...document.querySelectorAll('div.article-content h2')].filter(h2 => !h2.closest('aside') && isAdditionalH2InNumberedSection(h2)).length)
                 },
                 {
                     label: 'Orphaned headlines',
-                    value: String([...document.querySelectorAll('div.article-content h2, div.article-content h3, div.article-content h4')].filter(heading => inNumberedSection(heading) && heading.nextElementSibling?.tagName !== 'P').length)
+                    value: String([...document.querySelectorAll('div.article-content h2, div.article-content h3, div.article-content h4')].filter(heading => !heading.closest('aside') && inNumberedSection(heading) && heading.nextElementSibling?.tagName !== 'P').length)
                 }
 
 
