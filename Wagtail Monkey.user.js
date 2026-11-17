@@ -9,7 +9,7 @@
 // @include     /^https?:\/\/stage\.tech\.netdoktor\.de\//
 // @include     /^https?:\/\/stage\.tech\.netdoktor\.at\//
 // @include     /^https?:\/\/stage\.tech\.netdoktor\.ch\//
-// @version     5.1.1
+// @version     5.2.0
 // @description Adds a helpful simian companion to netDoktor pages that provides information about various on-page elements.
 // @downloadURL https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
 // @updateURL   https://github.com/Mancomb-Seepgood/tampermonkey_scripts_nd/raw/refs/heads/main/Wagtail%20Monkey.user.js
@@ -21,13 +21,13 @@
 // ==/UserScript==
 (function() {
     'use strict';
-    const version = '5.1.1';
+    const version = '5.2';
     const appTemplate = `<style>
   .vue-monkey {
     display: none;
     z-index: 10000001;
-    position: fixed; top: 96px; left: 0px;
-    width: 100%; height: 100%;
+    position: fixed; top: 96px; left: 16px;
+    height: 100%;
     padding: 10px;
     font-family:Roboto, sans-serif; font-size:14px; -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:rgba(0, 0, 0, 0);
     pointer-events:none;
@@ -110,41 +110,280 @@
     margin-top: 0;
     margin-bottom: 0;
   }
+    .vue-monkey .open-layer,
+  .vue-monkey .open-layer * {
+    box-sizing: border-box;
+  }
+
+  .vue-monkey .open-layer {
+    width: min(920px, calc(100vw - 32px));
+    max-height: calc(100vh - 116px);
+    padding: 0;
+    overflow-y: auto;
+    background: #f4f7fb;
+    color: #172b42;
+    border: 1px solid #dce6ef;
+    border-radius: 18px;
+    box-shadow: 0 20px 60px rgba(20, 43, 68, 0.24);
+  }
+
+  .vue-monkey .open-layer .monkey-modal-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 24px;
+    color: #fff;
+    background: linear-gradient(to right, #00bef7, #00bfff 40%, #002f8e);
+  }
+
+  .vue-monkey .open-layer .monkey-modal-heading {
+    margin: 0;
+    color: inherit;
+    font: 700 20px/1.3 Roboto, sans-serif;
+  }
+
+  .vue-monkey .open-layer .monkey-modal-close {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    font: 26px/1 Arial, sans-serif;
+    cursor: pointer;
+  }
+
+  .vue-monkey .open-layer .monkey-modal-close:hover {
+    background: rgba(255, 255, 255, 0.24);
+  }
+
+  .vue-monkey .open-layer .monkey-modal-body {
+    padding: 20px;
+  }
+
+  .vue-monkey .open-layer .monkey-modal-actions {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .vue-monkey .open-layer .monkey-modal-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .vue-monkey .open-layer .fixed-block,
+  .vue-monkey .open-layer .info-block {
+    min-width: 0;
+    padding: 18px;
+    border: 1px solid #dfe8f0;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(20, 43, 68, 0.04);
+  }
+
+  .vue-monkey .open-layer .form-label,
+  .vue-monkey .open-layer .info-block .title {
+    display: block;
+    margin-bottom: 12px;
+    padding: 0;
+    color: #173e5b;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 700;
+  }
+
+  .vue-monkey .open-layer .monkey-modal-controls {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .vue-monkey .open-layer .monkey-modal-nav .button + .button {
+    margin-left: 6px;
+  }
+
+  .vue-monkey .open-layer input[type="text"] {
+    width: 100%;
+    min-width: 0;
+    height: 36px;
+    padding: 7px 10px;
+    border: 1px solid #bfcedb;
+    border-radius: 8px;
+    background: #fff;
+    color: #172b42;
+    font: inherit;
+  }
+
+  .vue-monkey .open-layer input[readonly] {
+    background: #f3f6f9;
+  }
+
+  .vue-monkey .open-layer .button {
+    min-width: 0;
+    height: 36px;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding: 0 12px;
+    border: 0px solid #bfd6e1;
+    border-radius: 8px;
+    background: #00bef7;
+    color: #fff;
+    font: 600 13px Roboto, sans-serif;
+    cursor: pointer;
+  }
+
+  .vue-monkey .open-layer .button:hover {
+    background: #386faa;
+  }
+
+  .vue-monkey .open-layer :is(button, input):focus-visible {
+    outline: 2px solid #00bef7;
+    outline-offset: 2px;
+  }
+
+  .vue-monkey .open-layer .monkey-modal-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .vue-monkey .open-layer .info-block {
+    line-height: 1.45;
+  }
+
+  .vue-monkey .open-layer .info-block .info-block-detail {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 12px;
+    padding: 9px 0;
+    border-top: 1px solid #edf1f5;
+    overflow-wrap: anywhere;
+  }
+
+  .vue-monkey .open-layer .info-block .info-block-detail .label {
+    color: #5a6d80;
+    font-size: 13px;
+    font-style: normal;
+  }
+
+  .vue-monkey .open-layer .info-block .info-block-detail .value {
+    padding-left: 0;
+    color: #172b42;
+    font-weight: 600;
+  }
+
+  @media (max-width: 700px) {
+    .vue-monkey .open-layer .monkey-modal-nav,
+    .vue-monkey .open-layer .monkey-modal-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .vue-monkey .open-layer .monkey-modal-controls {
+      grid-template-columns: 1fr;
+    }
+
+    .vue-monkey .open-layer .monkey-modal-body {
+      padding: 12px;
+    }
+  }
+    .vue-monkey .open-layer .monkey-article-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .vue-monkey .open-layer .monkey-article-controls input[type="text"] {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .vue-monkey .open-layer .monkey-article-controls .button {
+    flex: none;
+  }
+
+  .vue-monkey .open-layer {
+    max-height: calc(100vh - var(--monkey-top) - 20px);
+  }
+
 </style>
-<div id="vue-monkey-app" class="vue-monkey" :style="{ display: mountDisplay }">
-  <div class="closed-layer" :class="[isClosed ? 'shown' : 'hidden']">
-    <div v-on:click="toggle" class="image" :class="{ standard: !isCampaign, campaign: isCampaign }"></div>
-    <div v-on:click="copyContentId" class="id-label" :style="{ display: labelStyle }"><span class="id-text">{{ message }}</span></div>
-    <input type="hidden" id="coptToClipboard" :value="copyString">
-  </div>
-  <div class="open-layer" :class="[!isClosed ? 'shown' : 'hidden']" v-on:click="toggle">
-    <div class="fixed-block">
-      <form class="goto-id" @submit.prevent="gotoArticle">
-        <span class="form-label">Go to article in Wagtail admin:</span>
-        <input
-  id="gotoId"
-  type="text"
-  v-model="articleid"
-  placeholder="Enter article ID & confirm"
-  @keydown.enter.prevent.stop="gotoArticle"
-/>
-        <button class="button" title="Datum bei äquivalenter GPP-URL prüfen" type="button" @click.stop="checkGppDate">Check GPP date</button>
-        <input type="text" readonly :value="gppDate" style="margin-left:8px; width:140px;" />
-      </form>
-    </div>
-    <div class="fixed-block">
-      <span class="form-label">Switch environment:</span><button class="button" title="Zu Stage wechseln" @click="gotoEnv('stage')">Stage</button><button class="button" title="Zu Prod wechseln" @click="gotoEnv('prod')">Prod</button><button class="button" title="Zu gleichem Pfad bei GPP wechseln" @click="gotoEnv('gpp')">GPP</button>
-    </div>
-    <div class="fixed-block">
-      <span class="form-label">Switch locale:</span><button class="button" title="Zu DE wechseln" @click="gotoEnv('nd_de')">DE</button><button class="button" title="Zu AT wechseln" @click="gotoEnv('nd_at')">AT</button><button class="button" title="Zu CH wechseln" @click="gotoEnv('nd_ch')">CH</button>
-    </div>
-    <info-block
-      v-for="(post, index) in posts"
-      :key="index"
-      :post="post"
-    ></info-block>
-  </div>
-</div>`;
+<div id="vue-monkey-app" class="vue-monkey"
+     :style="{ display: mountDisplay, top: monkeyTop + 'px', '--monkey-top': monkeyTop + 'px' }">
+	<div class="closed-layer" :class="[isClosed ? 'shown' : 'hidden']">
+		<div v-on:click="toggle" class="image" :class="{ standard: !isCampaign, campaign: isCampaign }"></div>
+		<div v-on:click="copyContentId" class="id-label" :style="{ display: labelStyle }">
+			<span class="id-text">{{ message }}</span>
+		</div>
+		<input type="hidden" id="coptToClipboard" :value="copyString">
+		</div>
+		<div class="open-layer" :class="[!isClosed ? 'shown' : 'hidden']">
+			<div class="monkey-modal-header">
+				<h2 class="monkey-modal-heading">Wagtail Monkey</h2>
+				<button
+        class="monkey-modal-close"
+        type="button"
+        title="Close"
+        aria-label="Close"
+        @click.stop="isClosed = true"
+      >&times;</button>
+			</div>
+			<div class="monkey-modal-body">
+				<div class="monkey-modal-actions">
+					<div class="fixed-block">
+						<form class="goto-id" @submit.prevent="gotoArticle">
+							<span class="form-label">Go to article in Wagtail admin:</span>
+							<div class="monkey-modal-controls">
+								<div class="monkey-article-controls">
+									<input
+    id="gotoId"
+    type="text"
+    v-model="articleid"
+    placeholder="Enter article ID & confirm"
+    @keydown.enter.prevent.stop="gotoArticle"
+  />
+									<button class="button" type="submit" title="Open article in Wagtail admin">
+    Open
+  </button>
+								</div>
+								<button class="button" title="Datum bei äquivalenter GPP-URL prüfen" type="button" @click.stop="checkGppDate">Check GPP date</button>
+								<input type="text" readonly :value="gppDate" />
+							</div>
+						</form>
+					</div>
+					<div class="monkey-modal-nav">
+						<div class="fixed-block">
+							<span class="form-label">Switch environment:</span>
+							<button class="button" title="Zu Stage wechseln" @click="gotoEnv('stage')">Stage</button>
+							<button class="button" title="Zu Prod wechseln" @click="gotoEnv('prod')">Prod</button>
+							<button class="button" title="Zu gleichem Pfad bei GPP wechseln" @click="gotoEnv('gpp')">GPP</button>
+						</div>
+						<div class="fixed-block">
+							<span class="form-label">Switch locale:</span>
+							<button class="button" title="Zu DE wechseln" @click="gotoEnv('nd_de')">DE</button>
+							<button class="button" title="Zu AT wechseln" @click="gotoEnv('nd_at')">AT</button>
+							<button class="button" title="Zu CH wechseln" @click="gotoEnv('nd_ch')">CH</button>
+						</div>
+					</div>
+				</div>
+				<div class="monkey-modal-grid">
+					<info-block
+          v-for="(post, index) in posts"
+          :key="index"
+          :post="post"
+        ></info-block>
+				</div>
+			</div>
+		</div>
+	</div>`;
 
     function readConfig() {
         const element = document.getElementById('nd-config');
@@ -370,6 +609,10 @@
                 {
                     label: "What's the deal with the crown & sunglasses?",
                     value: 'If the monkey is sporting a crown and sunglasses, a CS-ID is set on the page'
+                },
+                {
+                    label: 'Wagtail Monkey Version',
+                    value: version
                 }
             ]
         });
@@ -384,13 +627,6 @@
         adInformation(config, data, posts);
         onPageInformation(posts);
         helpInformation(posts);
-        posts.push({
-            title: 'Wagtail Monkey',
-            info: [{
-                label: 'Version',
-                value: version
-            }]
-        });
         Vue.component('info-block-label', {
             props: ['info'],
             template: '<div class="info-block-detail"><span class="label">{{ info.label }}:</span><span class="value">{{ info.value }}</span></div>'
@@ -407,13 +643,33 @@
                 isCampaign: campaignId(data) !== undefined,
                 labelStyle: 'block',
                 isClosed: true,
+                monkeyTop: Math.max(0, 96 - window.scrollY),
                 mountDisplay: 'block',
                 copyString: '',
                 posts: posts,
                 articleid: null,
                 gppDate: 'not checked'
             },
+            mounted: function() {
+                document.addEventListener('click', this.handleOutsideClick, true);
+                window.addEventListener('scroll', this.updateMonkeyTop, {
+                    passive: true
+                });
+                this.updateMonkeyTop();
+            },
+            beforeDestroy: function() {
+                document.removeEventListener('click', this.handleOutsideClick, true);
+                window.removeEventListener('scroll', this.updateMonkeyTop);
+            },
             methods: {
+                handleOutsideClick: function(event) {
+                    if (!this.isClosed && !this.$el.contains(event.target)) {
+                        this.isClosed = true;
+                    }
+                },
+                updateMonkeyTop: function() {
+                    this.monkeyTop = Math.max(0, 96 - window.scrollY);
+                },
                 toggle: function(event) {
                     // Clicking a control must not close the overlay.
                     if (event.target.closest('button, input, form')) return;
